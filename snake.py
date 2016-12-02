@@ -38,7 +38,6 @@ display_height  = 600
 gameDisplay = pygame.display.set_mode((display_width,display_height))
 pygame.display.set_caption('Snake And Bouncy balls')
 
-img = pygame.image.load('images/snake_head_400x400.png')
 
 
 clock = pygame.time.Clock()
@@ -48,11 +47,36 @@ block_size = 20
 FPS = 15
 
 
+#===============================================================================
+
+                #******** Sprite Images *******
+
+# Snake Sprite Images.
+snakeDirection = 'up'
+snakeHead = pygame.image.load('images/snake_head.png')
+snakeBody1 = pygame.image.load('images/snake_body1.png')
+snakeBody2 = pygame.image.load('images/snake_body2.png')
+snakeTail = pygame.image.load('images/snake_tail.png')
+
+
+
+
+#===============================================================================
+
+#******** Font Sizes *******
 
 large_font = pygame.font.SysFont(None, 68)
 medium_font = pygame.font.SysFont(None, 50)
 small_font = pygame.font.SysFont(None, 25)
 
+
+#===============================================================================
+
+#******** Helper Functions *******
+
+
+
+#===============================================================================
 
 def make_ball():
 
@@ -68,6 +92,9 @@ def make_ball():
     ball.change_y = random.randrange(-3, 4)
 
     return ball
+
+#===============================================================================
+
 
 def game_intro():
 
@@ -122,12 +149,47 @@ def game_intro():
         pygame.display.update()
         clock.tick(15)
 
-def snake(block_size, snakelist):
+#===============================================================================
 
-    gameDisplay.blit(img, (snakelist[-1][0], snakelist[-1][1]))
-    for XnY in snakelist[:-1]:
-        pygame.draw.rect(gameDisplay, green, [XnY[0],XnY[1],block_size,block_size])
+def snake(block_size, snakeList):
 
+    global snakeDirection
+    global snakeHead
+
+    head = pygame.image.load('images/snake_head.png')
+
+
+    # change the direction based on the given direction.
+    if snakeDirection == 'left':
+        print 'going left'
+        snakeHead = pygame.transform.rotate(head, 90)
+    if snakeDirection == 'right':
+        print 'going right'
+        snakeHead = pygame.transform.rotate(head, 270)
+    if snakeDirection == 'down':
+        print 'going down'
+        snakeHead = pygame.transform.rotate(head, 180)
+    if snakeDirection == 'up':
+        print 'going up'
+        snakeHead = pygame.transform.rotate(head, 0)
+
+    # draw the rest of the snake's body:
+    for i, bodySegmentCoordinate in enumerate(snakeList):
+        # positions.
+        x = 0
+        y = 1
+
+        # draw the tail if it is the last segment. else if it's an odd segment, draw the first type of segment, otherwise draw the second type of segment.
+        #if i == (len(snakeList)-1) and (len(snakeList) > 1):
+        #    gameDisplay.blit(snakeTail, (bodySegmentCoordinate[x], bodySegmentCoordinate[y]))
+        if i == len(snakeList)-1:
+            gameDisplay.blit(snakeHead, (bodySegmentCoordinate[x], bodySegmentCoordinate[y]))
+        elif i%2 == 0:
+            gameDisplay.blit(snakeBody1, (bodySegmentCoordinate[x], bodySegmentCoordinate[y]))
+        else:
+            gameDisplay.blit(snakeBody2, (bodySegmentCoordinate[x], bodySegmentCoordinate[y]))
+
+#===============================================================================
 
 def text_objects(text,color,size):
     if size == "small":
@@ -140,12 +202,17 @@ def text_objects(text,color,size):
 
     return textSurface, textSurface.get_rect()
 
+#===============================================================================
 
 def message_to_screen(msg,color, y_displace=0, size = "small"):
     textSurf, textRect = text_objects(msg,color, size)
     textRect.center = (display_width / 2), (display_height / 2)+y_displace
     gameDisplay.blit(textSurf, textRect)
 
+
+#===============================================================================
+
+#********** Main Game Loop **********
 
 def gameLoop():
     gameExit = False
@@ -159,6 +226,7 @@ def gameLoop():
 
     snakeList = []
     snakeLength = 1
+    global snakeDirection
 
     total_socre = 0
     num_of_balls = 1
@@ -174,6 +242,7 @@ def gameLoop():
     randAppleY = round(random.randrange(0, display_height-block_size))
 
     while not gameExit:
+
 
         while gameOver == True:
             gameDisplay.fill(white)
@@ -205,15 +274,19 @@ def gameLoop():
             if event.type == pygame.KEYDOWN:
                 # snake movement , left, right, up , down
                 if event.key == pygame.K_LEFT:
+                    snakeDirection = 'left'
                     lead_x_change = -block_size
                     lead_y_change = 0
                 elif event.key == pygame.K_RIGHT:
+                    snakeDirection = 'right'
                     lead_x_change = block_size
                     lead_y_change = 0
                 elif event.key == pygame.K_UP:
+                    snakeDirection = 'up'
                     lead_y_change = -block_size
                     lead_x_change = 0
                 elif event.key == pygame.K_DOWN:
+                    snakeDirection = 'down'
                     lead_y_change = block_size
                     lead_x_change = 0
 
@@ -269,7 +342,10 @@ def gameLoop():
             del snakeList[0]
 
 
-        #function to make the snake
+        # this is where collision detection goes for snake body.
+
+
+        #function to make the snake, draw the snake with snake(...)
         snake(block_size, snakeList)
 
         # draw balls in the screen, randomly
@@ -353,6 +429,13 @@ def gameLoop():
 
     pygame.quit()
     quit()
+#===============================================================================
 
-game_intro()
-gameLoop()
+
+
+
+
+#===============================================================================
+game_intro() # Run the game intro with instructions for game play.
+gameLoop()  # Play the game.
+#===============================================================================
