@@ -56,8 +56,8 @@ snakeDirection = 'up'
 snakeHead = pygame.image.load('images/snake_head.png')
 snakeBody1 = pygame.image.load('images/snake_body1.png')
 snakeBody2 = pygame.image.load('images/snake_body2.png')
-snakeTail = pygame.image.load('images/snake_tail.png')
-
+snakeTail = pygame.image.load('images/snake_tail0.png')
+samuelJackson = pygame.image.load('images/samuel_head.png')
 
 
 
@@ -156,8 +156,8 @@ def snake(block_size, snakeList):
     global snakeDirection
     global snakeHead
 
+    # create a new head sprite to rotate appropriately.
     head = pygame.image.load('images/snake_head.png')
-
 
     # change the direction based on the given direction.
     if snakeDirection == 'left':
@@ -180,9 +180,9 @@ def snake(block_size, snakeList):
         y = 1
 
         # draw the tail if it is the last segment. else if it's an odd segment, draw the first type of segment, otherwise draw the second type of segment.
-        #if i == (len(snakeList)-1) and (len(snakeList) > 1):
-        #    gameDisplay.blit(snakeTail, (bodySegmentCoordinate[x], bodySegmentCoordinate[y]))
-        if i == len(snakeList)-1:
+        if i == 0 and (len(snakeList) > 1):
+            gameDisplay.blit(snakeTail, (bodySegmentCoordinate[x], bodySegmentCoordinate[y]))
+        elif i == len(snakeList)-1:
             gameDisplay.blit(snakeHead, (bodySegmentCoordinate[x], bodySegmentCoordinate[y]))
         elif i%2 == 0:
             gameDisplay.blit(snakeBody1, (bodySegmentCoordinate[x], bodySegmentCoordinate[y]))
@@ -350,7 +350,8 @@ def gameLoop():
 
         # draw balls in the screen, randomly
         for ball in ball_list:
-            pygame.draw.circle(gameDisplay, black, [ball.x, ball.y], BALL_SIZE)
+            #pygame.draw.circle(gameDisplay, black, [ball.x, ball.y], BALL_SIZE)
+            gameDisplay.blit(samuelJackson, (ball.x, ball.y))
             #print("ball displayed...")  debug
 
 
