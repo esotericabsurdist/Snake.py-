@@ -7,22 +7,23 @@ Description:
     a game inspired by the traditional game "Snake" that is found on old Nokia phones, wiht a bouncing balls twist
     this file represent the whole game visuals and logic. README.txt file will have more details about the game.
 '''
-
+#===============================================================================
 import pygame
 import time
 import random
-
+#===============================================================================
 
 class Ball:
-
     # Class to keep track of a ball's location and vector.
-
     def __init__(self):
         self.x = 0
         self.y = 0
         self.change_x = 0
         self.change_y = 0
 
+#===============================================================================
+
+            #*********** Globals variables and Setup ***********
 
 pygame.init()
 
@@ -36,14 +37,16 @@ darkBlue = (59, 66, 234)
 display_width = 800
 display_height  = 600
 
-# size of boundary in screen. This boundary indicates when to scroll.
-boundary_width = 600
-boundary_height = 400
-
 # size of map.
 map_width = 2400
 map_height = 3000
 
+# camera position.
+camera_x = 0
+camera_y = 0
+
+# get map image.
+map_image = pygame.image.load('images/map_test.png')
 
 gameDisplay = pygame.display.set_mode((display_width,display_height))
 pygame.display.set_caption('Snake And Bouncy balls')
@@ -211,10 +214,15 @@ def gameLoop():
     lead_x_change = 0
     lead_y_change = 0
 
+    # initialize the map variables for scrolling purposes:
+    # camera position.
+    global camera_x
+    global camera_y
+
     # initialize the snake.
     snakeList = []
     snakeLength = 1
-    global snakeDirection
+    global snakeDirection # do we need to make this global, or can we declare it in main.
 
     # initialize environment and etc.
     total_socre = 0
@@ -230,20 +238,18 @@ def gameLoop():
 
     while not gameExit:
         #====================================
-        # Show game over menu when it's game over. Game over occurs when snake loses health or when snake collides with the wall, or snake collides with itself. 
+        # Show game over menu when it's game over. Game over occurs when snake loses health or when snake collides with the wall, or snake collides with itself.
         while gameOver == True:
             gameDisplay.fill(white)
             message_to_screen("Game over, Press 'C' to play or 'Q' to quit.", red , y_displace=-50 , size="medium")
             message_to_screen("Total Score: "+str(total_socre),darkBlue ,  y_displace=0 , size="medium")
             message_to_screen("number of snake-ball collision :"+str(num_of_snake_ball_collision), darkBlue ,  y_displace=50 , size="medium")
-
             pygame.display.update()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     gameOver = False
                     gameExit = True
-
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_q:
                         gameExit = True
@@ -309,20 +315,70 @@ def gameLoop():
         if lead_x >= display_width or lead_x < 0 or lead_y >= display_height or lead_y < 0:
             gameOver = True
 
-        # if snake hits inner boundary, scroll window if direction is towards the inner boundary.
-        #TODO
 
+        # Update the position of the snake based on the changes inputted by arrow keys, and based on the snakes location in the map.
+        if snakeDirection == 'left':
+            if lead_x == 100: # if snake is at the left boundary, just move the camera, not the snake.
+                # update the camera
+                if camera_x is not 0:
+                    camera_x -= lead_x_change
+                else:
+                    # update the snake.
+                    lead_x += lead_x_change
+                    lead_y += lead_y_change
+                    # update the
+            else: # if the snake is not at the left boundary, scroll just the snake.
+                # update the snake.
+                lead_x += lead_x_change
+                lead_y += lead_y_change
+        elif snakeDirection == 'right':
+            if lead_x == 700:
+                # update the camera
+                if (camera_x + display_width) is not map_width:
+                    camera_x -= lead_x_change
+                else:
+                    lead_x += lead_x_change
+                    lead_y += lead_y_change
+            else:
+                # update the snake.
+                lead_x += lead_x_change
+                lead_y += lead_y_change
+        elif snakeDirection == 'up':
+            if lead_y == 100: # update the camera
+                if camera_y is not 0:
+                    camera_y -= lead_y_change
+                else:
+                    lead_x += lead_x_change
+                    lead_y += lead_y_change
+            else: # update the snake.
+                lead_x += lead_x_change
+                lead_y += lead_y_change
+        elif snakeDirection == 'down':
+            if lead_y == 500: # update the camera
+                if (camera_y + display_height) is not map_height:
+                    camera_y -= lead_y_change
+                else:
+                    lead_x += lead_x_change
+                    lead_y += lead_y_change
+            else:
+                # update the snake.
+                lead_x += lead_x_change
+                lead_y += lead_y_change
 
-        lead_x += lead_x_change
-        lead_y += lead_y_change
+        #====================================
 
-        gameDisplay.fill(white)
+        #lead_x += lead_x_change
+        #lead_y += lead_y_change
+
+        # draw the background
+        #gameDisplay.fill(white)
+        gameDisplay.blit(map_image, (camera_x, camera_y))
 
         # place an apple as a red rectangle randomly in the screen
         AppleThickness = 30
         pygame.draw.rect(gameDisplay, red, [randAppleX, randAppleY, AppleThickness, AppleThickness])
 
-
+        # build snake.
         snakeHead = []
         snakeHead.append(lead_x)
         snakeHead.append(lead_y)
@@ -332,11 +388,10 @@ def gameLoop():
         if len(snakeList) > snakeLength:
             del snakeList[0]
 
-
         # this is where collision detection goes for snake body.
+        # TODO
 
-
-        #function to make the snake, draw the snake with snake(...)
+        # draw the snake
         snake(snakeList)
 
         # draw balls in the screen, randomly
