@@ -58,6 +58,15 @@ lead_y = display_height/2
 camera_x = 0
 camera_y = 0
 
+# store the snake body in a list.
+snakeList = []
+
+# inner boundary dimensions.
+INNER_TOP = 200
+INNER_LEFT = 200
+INNER_RIGHT = 600
+INNER_BOTTOM = 400
+
 # get map image.
 map_image = pygame.image.load('images/map_test.png')
 
@@ -152,7 +161,7 @@ def game_intro():
 # snake(snakeList) draws the snake to screen based on the current position
 # of each snake segment listed in the snakeList.
 def snake(snakeList):
-
+    print 'snakeList: ', snakeList
     global snakeDirection
     global snakeHead
     global lead_x
@@ -269,10 +278,12 @@ def gameLoop():
     # x,y positions of the head of the snake. lead, refers to head.
     global lead_x #= display_width/2
     global lead_y #= display_height/2
+    lead_x = 400
+    lead_y = 300
 
     # the snakes position in map space.
-    snake_x = 300#1200
-    snake_y = 600#2700 # depends on the size of the map image.
+    snake_x = 400#1200
+    snake_y = 300#2700 # depends on the size of the map image.
 
     # the change in the lead positions represent the direction and the number of pixels to move for every frame.
     lead_x_change = 0
@@ -288,7 +299,7 @@ def gameLoop():
     global camera_y
 
     # initialize the snake.
-    snakeList = []
+    global snakeList#snakeList = []
     snakeLength = 1
     global snakeDirection # do we need to make this global, or can we declare it in main.
 
@@ -402,12 +413,12 @@ def gameLoop():
 
         #====================================
 
-        print 'camera_x', camera_x
-        print 'snake_x, snake_y', snake_x, snake_y
+        # print 'camera_x', camera_x
+        # print 'snake_x, snake_y', snake_x, snake_y
 
         # Update the position of the snake based on the changes inputted by arrow keys, and based on the snakes location in the map.
         if snakeDirection == 'left':
-            if lead_x == 200: # if snake is at the left boundary, just move the camera, not the snake.
+            if lead_x == INNER_LEFT: # if snake is at the left boundary, just move the camera, not the snake.
                 # update the snake's position in map space.
                 snake_x -= block_size
                 # update the camera
@@ -426,7 +437,7 @@ def gameLoop():
             # update the snake's position in map space.
             snake_x += block_size
 
-            if lead_x == 600:
+            if lead_x == INNER_RIGHT:
                 # update the camera
                 if abs(camera_x - display_width) < map_width:
                     # print 'here is the camera position ', camera_x
@@ -444,7 +455,7 @@ def gameLoop():
             # update the snake's position in map space.
             snake_y -= block_size
 
-            if lead_y == 200: # update the camera
+            if lead_y == INNER_TOP: # update the camera
                 if camera_y is not 0:
                     camera_y -= lead_y_change
                 else:
@@ -457,7 +468,7 @@ def gameLoop():
             # update the snake's position in map space.
             snake_y += block_size
 
-            if lead_y == 400: # update the camera
+            if lead_y == INNER_BOTTOM: # update the camera
                 if abs(camera_y - display_height) < map_height: # if the camera hasn't reached the end of the map, just scroll the map.
                     camera_y -= lead_y_change
                 else: #
@@ -485,23 +496,64 @@ def gameLoop():
         pygame.draw.rect(gameDisplay, red, [randAppleX, randAppleY, AppleThickness, AppleThickness])
 
         # build snake.
-        snakeHead = []
-        snakeHead.append(lead_x)
-        snakeHead.append(lead_y)
-        snakeList.append(snakeHead)
+        if lead_x == INNER_RIGHT and snakeDirection == 'right':
+            # append body behind head.
+            snakeList = []
+            for i in range(0, snakeLength):
+                snakeList.append([(lead_x - i*block_size), lead_y])
+            # reverse the list because the for loop above builds it backwards.
+            snakeList.reverse()
+            # draw snake.
+            snake(snakeList)
+        elif lead_x == INNER_LEFT and snakeDirection == 'left':
+            # append body behind head.
+            snakeList = []
+            for i in range(0, snakeLength):
+                snakeList.append([(lead_x + i*block_size), lead_y])
+            # reverse the list because the for loop above builds it backwards.
+            snakeList.reverse()
+            # draw snake.
+            snake(snakeList)
+        elif lead_y == INNER_BOTTOM and snakeDirection == 'down':
+            # append body behind head.
+            snakeList = []
+            for i in range(0, snakeLength):
+                snakeList.append([lead_x, (lead_y - i*block_size)])
+            # reverse the list because the for loop above builds it backwards.
+            snakeList.reverse()
+            # draw snake.
+            snake(snakeList)
+        elif lead_y == INNER_TOP and snakeDirection == 'up':
+            # append body behind head.
+            snakeList = []
+            for i in range(0, snakeLength):
+                snakeList.append([lead_x, (lead_y + i*block_size)])
+            # reverse the list because the for loop above builds it backwards.
+            snakeList.reverse()
+            # draw snake.
+            snake(snakeList)
+        else:
+            # if we are not at the inner boundary, update the snake body's position.
+            snakeSegment = []
+            snakeSegment.append(lead_x)
+            snakeSegment.append(lead_y)
+            snakeList.append(snakeSegment)
+            # smooth movment for the snake without leaving blcoks behind,
+            if len(snakeList) > snakeLength:
+                del snakeList[0]
+            # draw the snake
+            snake(snakeList)
 
-        # smooth movment for the snake without leaving blcoks behind,
-        if len(snakeList) > snakeLength:
-            del snakeList[0]
 
-        # this works, but segments stack up onto the same position as head when snake is at inner boundary. 
-        # # collision detection for snake running into itself
-        # for eachSegment in snakeList[:-1]:
-        #     if eachSegment == snakeHead:
-        #         gameOver = True
 
-        # draw the snake
-        snake(snakeList)
+
+        #this works, but segments stack up onto the same position as head when snake is at inner boundary.
+        # collision detection for snake running into itself
+        for eachSegment in snakeList[:-1]:
+            if eachSegment == snakeHead:
+                gameOver = True
+
+
 
         # draw balls in the screen, randomly
         for ball in ball_list:
