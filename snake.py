@@ -32,16 +32,27 @@ black = (0,0,0)
 red = (255,0,0)
 green = (0,155,0)
 darkBlue = (59, 66, 234)
+grey = (201, 203, 204)
+
+light_red = (255,0,0)
+
+yellow = (200,200,0)
+light_yellow = (255,255,0)
+
+#green = (34,177,76)
+light_green = (0,255,0)
+
 
 # size of the screen.
 display_width = 800
 display_height  = 600
 
+
 # size of map.
 map_width = 2400
 map_height = 3000
 
-# camera position.
+# camera position. should be camera_x = 800 , camera_y = 2400 ..
 camera_x = 0
 camera_y = 0
 
@@ -49,7 +60,7 @@ camera_y = 0
 map_image = pygame.image.load('images/map_test.png')
 
 gameDisplay = pygame.display.set_mode((display_width,display_height))
-pygame.display.set_caption('Snake And Bouncy balls')
+pygame.display.set_caption('Snakes on the plane')
 
 # Clock
 clock = pygame.time.Clock()
@@ -198,6 +209,50 @@ def message_to_screen(msg,color, y_displace=0, size = "small"):
 
 
 #===============================================================================
+def bars(snake_life, poison_ability):
+
+    if snake_life > 10:         # there's a problem here, colors don't match up ...
+        snake_life_color = green
+    elif snake_life > 5:
+        snake_life_color = yellow
+    else:
+        snake_life_color = red
+
+#assuming if u reach a 100, u get poision ability ..
+    if poison_ability > 75:
+        poison_ability_color = black
+    elif poison_ability > 50:
+        poison_ability_color = grey
+    else:
+        poison_ability_color = light_yellow
+
+    pygame.draw.rect(gameDisplay, snake_life_color, (680, 25, snake_life, 25))
+    pygame.draw.rect(gameDisplay, poison_ability_color, (20, 25, poison_ability, 25))
+
+    #int(max(min(currentHP / float(maxHP) * health_bar_width, health_bar_width), 0))
+#===============================================================================
+def pause():
+
+    paused = True
+    message_to_screen("Paused",black,-100,size="large")
+    message_to_screen("Press C to continue playing or Q to quit",black,25)
+    pygame.display.update()
+    while paused:
+        for event in pygame.event.get():
+
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    quit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_c:
+                        paused = False
+                    elif event.key == pygame.K_q:
+                        pygame.quit()
+                        quit()
+
+
+#===============================================================================
+
 
                 #********** Main Game Loop **********
 
@@ -213,6 +268,10 @@ def gameLoop():
     # the change in the lead positions represent the direction and the number of pixels to move for every frame.
     lead_x_change = 0
     lead_y_change = 0
+
+    #to keep track of snake life and poisin ability, snake_life = colision_
+    snake_life = 15
+    poison_ability = 0
 
     # initialize the map variables for scrolling purposes:
     # camera position.
@@ -257,6 +316,9 @@ def gameLoop():
                     if event.key == pygame.K_c:
                         gameLoop()
 
+            camera_x = 0
+            camera_y = 0
+
         #====================================
 
         # input controls from user (keyboard inputs)
@@ -294,7 +356,8 @@ def gameLoop():
                         ball_list.remove(ball)
                         num_of_balls = num_of_balls - 1
                         #print ("ball removed") #debug
-
+                if event.key == pygame.K_p:
+                    pause()
         #====================================
 
         # draw the moving enemie/balls/SamuelLJacksons
@@ -312,7 +375,7 @@ def gameLoop():
         #====================================
 
         # if snake hit screen boundries, game over
-        if lead_x >= display_width or lead_x < 0 or lead_y >= display_height or lead_y < 0:
+        if lead_x >= map_width or lead_x < 0 or lead_y >= map_height or lead_y < 0:
             gameOver = True
 
 
@@ -365,6 +428,9 @@ def gameLoop():
                 lead_x += lead_x_change
                 lead_y += lead_y_change
 
+
+        pygame.display.update()
+
         #====================================
 
         #lead_x += lead_x_change
@@ -411,6 +477,8 @@ def gameLoop():
         text = small_font.render("number of snake-ball collision :"+str(num_of_snake_ball_collision), True, black)
         gameDisplay.blit(text, [0,20])
 
+        bars(snake_life,poison_ability)
+
 
 
         # make snake longer when eating an apple, collision detection ,
@@ -425,8 +493,13 @@ def gameLoop():
                 # logic for calculating the total score based on the balls present in the screen
                 if num_of_balls == 0:
                     total_socre = total_socre + 1;
+                    #poison_ability can be developed with better algorithm to keep up with the game level
+                    poison_ability = poison_ability + 1;
                 else:
                     total_socre = total_socre + num_of_balls
+                    #for now, we're treating poison_ability as total score
+                    poison_ability = poison_ability + num_of_balls;
+
 
             elif lead_y + block_size > randAppleY and lead_y + block_size < randAppleY + AppleThickness:
 
@@ -437,8 +510,12 @@ def gameLoop():
                 # logic for calculating the total score based on the balls present in the screen
                 if num_of_balls == 0:
                     total_socre = total_socre + 1
+                    #poison_ability can be developed with better algorithm to keep up with the game level
+                    poison_ability = poison_ability + 1;
                 else:
                     total_socre = total_socre + num_of_balls
+                    #for now, we're treating poison_ability as total score
+                    poison_ability = poison_ability + num_of_balls;
 
 
 
@@ -454,6 +531,8 @@ def gameLoop():
 
                     # calculating the num_of_snake_ball_collision, if it reaches to 15, then game over ,
                     num_of_snake_ball_collision = num_of_snake_ball_collision + 1
+                    #snake_life as max collision
+                    snake_life -= num_of_snake_ball_collision;
                     if num_of_snake_ball_collision == 15:
                         gameOver = True
 
@@ -465,6 +544,7 @@ def gameLoop():
 
                     # calculating the num_of_snake_ball_collision, if it reaches to 15, then game over ,
                     num_of_snake_ball_collision = num_of_snake_ball_collision + 1
+                    snake_life -= num_of_snake_ball_collision;
                     if num_of_snake_ball_collision == 15:
                         gameOver = True
 
