@@ -47,10 +47,12 @@ light_green = (0,255,0)
 display_width = 800
 display_height  = 600
 
-
 # size of map.
 map_width = 2400
 map_height = 3000
+
+lead_x = display_width/2
+lead_y = display_height/2
 
 # camera position. should be camera_x = 800 , camera_y = 2400 ..
 camera_x = 0
@@ -75,7 +77,7 @@ FPS = 15
                 #******** Sprite Images *******
 
 # Snake Sprite Images.
-snakeDirection = 'up'
+snakeDirection = None
 snakeHead = pygame.image.load('images/snake_head.png')
 snakeBody1 = pygame.image.load('images/snake_body1.png')
 snakeBody2 = pygame.image.load('images/snake_body2.png')
@@ -153,6 +155,8 @@ def snake(snakeList):
 
     global snakeDirection
     global snakeHead
+    global lead_x
+    global lead_y
 
     # create a new head sprite to rotate appropriately.
     head = pygame.image.load('images/snake_head.png')
@@ -261,9 +265,14 @@ def gameLoop():
     gameExit = False
     gameOver = False
 
+    # this is the snakes position in screen space.
     # x,y positions of the head of the snake. lead, refers to head.
-    lead_x = display_width/2
-    lead_y = display_height/2
+    global lead_x #= display_width/2
+    global lead_y #= display_height/2
+
+    # the snakes position in map space.
+    snake_x = 300#1200
+    snake_y = 600#2700 # depends on the size of the map image.
 
     # the change in the lead positions represent the direction and the number of pixels to move for every frame.
     lead_x_change = 0
@@ -374,14 +383,33 @@ def gameLoop():
 
         #====================================
 
-        # if snake hit screen boundries, game over
-        if lead_x >= map_width or lead_x < 0 or lead_y >= map_height or lead_y < 0:
+        #if snake hits screen boundries, game over
+        if snake_x >= map_width and lead_x >= 800:
+            print 'map_width', map_width
+            print 'snake_x', snake_x
+            print 'lead_x', lead_x
+            gameOver = True
+        elif snake_y >= map_height and lead_y >= 600:
+            print 'map_width', map_width
+            print 'snake_y', snake_y
+            print 'lead_y', lead_y
+            gameOver = True
+        elif lead_x <= 0 or lead_y <= 0:
             gameOver = True
 
+        # if snake_x >= map_width or lead_x < 0 or snake_y >= map_height or lead_y < 0:
+        #     gameOver = True
+
+        #====================================
+
+        print 'camera_x', camera_x
+        print 'snake_x, snake_y', snake_x, snake_y
 
         # Update the position of the snake based on the changes inputted by arrow keys, and based on the snakes location in the map.
         if snakeDirection == 'left':
-            if lead_x == 100: # if snake is at the left boundary, just move the camera, not the snake.
+            if lead_x == 200: # if snake is at the left boundary, just move the camera, not the snake.
+                # update the snake's position in map space.
+                snake_x -= block_size
                 # update the camera
                 if camera_x is not 0:
                     camera_x -= lead_x_change
@@ -391,13 +419,19 @@ def gameLoop():
                     lead_y += lead_y_change
                     # update the
             else: # if the snake is not at the left boundary, scroll just the snake.
-                # update the snake.
+                # update the snake in screen space.
                 lead_x += lead_x_change
                 lead_y += lead_y_change
         elif snakeDirection == 'right':
-            if lead_x == 700:
+            # update the snake's position in map space.
+            snake_x += block_size
+
+            if lead_x == 600:
                 # update the camera
-                if (camera_x + display_width) is not map_width:
+                if abs(camera_x - display_width) < map_width:
+                    # print 'here is the camera position ', camera_x
+                    # print 'here is the camera width + display width ', (camera_x + display_width)
+                    # print 'lead_x_change', lead_x_change
                     camera_x -= lead_x_change
                 else:
                     lead_x += lead_x_change
@@ -407,7 +441,10 @@ def gameLoop():
                 lead_x += lead_x_change
                 lead_y += lead_y_change
         elif snakeDirection == 'up':
-            if lead_y == 100: # update the camera
+            # update the snake's position in map space.
+            snake_y -= block_size
+
+            if lead_y == 200: # update the camera
                 if camera_y is not 0:
                     camera_y -= lead_y_change
                 else:
@@ -417,10 +454,13 @@ def gameLoop():
                 lead_x += lead_x_change
                 lead_y += lead_y_change
         elif snakeDirection == 'down':
-            if lead_y == 500: # update the camera
-                if (camera_y + display_height) is not map_height:
+            # update the snake's position in map space.
+            snake_y += block_size
+
+            if lead_y == 400: # update the camera
+                if abs(camera_y - display_height) < map_height: # if the camera hasn't reached the end of the map, just scroll the map.
                     camera_y -= lead_y_change
-                else:
+                else: #
                     lead_x += lead_x_change
                     lead_y += lead_y_change
             else:
@@ -454,8 +494,11 @@ def gameLoop():
         if len(snakeList) > snakeLength:
             del snakeList[0]
 
-        # this is where collision detection goes for snake body.
-        # TODO
+        # this works, but segments stack up onto the same position as head when snake is at inner boundary. 
+        # # collision detection for snake running into itself
+        # for eachSegment in snakeList[:-1]:
+        #     if eachSegment == snakeHead:
+        #         gameOver = True
 
         # draw the snake
         snake(snakeList)
