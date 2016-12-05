@@ -51,6 +51,9 @@ display_height  = 600
 map_width = 2400
 map_height = 3000
 
+# background border width.
+BORDER_WIDTH = 20
+
 lead_x = display_width/2
 lead_y = display_height/2
 
@@ -60,6 +63,14 @@ camera_y = 0
 
 # store the snake body in a list.
 snakeList = []
+
+# humans list, food for snake.
+humans = []
+humanFaces = []
+humanFaces.append(pygame.image.load('images/face_1.png'))
+humanFaces.append(pygame.image.load('images/face_2.png'))
+humanFaces.append(pygame.image.load('images/face_3.png'))
+
 
 # inner boundary dimensions.
 INNER_TOP = 200
@@ -147,7 +158,7 @@ def game_intro():
         gameDisplay.fill(white)
         message_to_screen("Welcome to Snake & Bouncy balls", darkBlue, -150, "large")
         message_to_screen("Remember to be smart when generating or removing balls", black, -30)
-        message_to_screen("Each ball you have in the screen will give you +1 point when you eat an apple", black, 0)
+        message_to_screen("Each ball you have in the screen will give you +1 point when you eat an human", black, 0)
         message_to_screen("The more balls you have, the more points you can get! but it's more difficult", black, 30)
         message_to_screen("If it gets difficult, remove balls to move freely, you have 15 max collisions before you lose", black, 60)
         message_to_screen("to add a ball, press 'a' , to delete a ball press 'd' ", green, 90)
@@ -311,9 +322,9 @@ def gameLoop():
     ball = make_ball()
     ball_list.append(ball)
 
-    #set up random apple locations
-    randAppleX = round(random.randrange(0, display_width-block_size))
-    randAppleY = round(random.randrange(0, display_height-block_size))
+    #set up random human locations and faces.  human array has the format [ [x,y,img], [x,y,img], ... ]
+    for i in range(0, 100):
+        humans.append([random.randrange(BORDER_WIDTH, map_width - BORDER_WIDTH), random.randrange(BORDER_WIDTH, map_height - BORDER_WIDTH), random.choice(humanFaces)])
 
     while not gameExit:
         #====================================
@@ -479,21 +490,19 @@ def gameLoop():
                 lead_x += lead_x_change
                 lead_y += lead_y_change
 
-
+        # update!
         pygame.display.update()
 
         #====================================
 
-        #lead_x += lead_x_change
-        #lead_y += lead_y_change
-
         # draw the background
-        #gameDisplay.fill(white)
         gameDisplay.blit(map_image, (camera_x, camera_y))
 
-        # place an apple as a red rectangle randomly in the screen
-        AppleThickness = 30
-        pygame.draw.rect(gameDisplay, red, [randAppleX, randAppleY, AppleThickness, AppleThickness])
+        # place an human as a red rectangle randomly in the map
+        for human in humans
+        #humanThickness = 30
+        #pygame.draw.rect(gameDisplay, red, [randhumanX, randhumanY, humanThickness, humanThickness])
+
 
         # build snake.
         if lead_x == INNER_RIGHT and snakeDirection == 'right':
@@ -576,13 +585,13 @@ def gameLoop():
 
 
 
-        # make snake longer when eating an apple, collision detection ,
-        if lead_x > randAppleX and lead_x < randAppleX + AppleThickness or lead_x + block_size > randAppleX and lead_x + block_size < randAppleX + AppleThickness:
+        # make snake longer when eating an human, collision detection ,
+        if lead_x > randhumanX and lead_x < randhumanX + humanThickness or lead_x + block_size > randhumanX and lead_x + block_size < randhumanX + humanThickness:
 
-            if lead_y > randAppleY and lead_y < randAppleY + AppleThickness:
+            if lead_y > randhumanY and lead_y < randhumanY + humanThickness:
 
-                randAppleX = round(random.randrange(0, display_width-block_size))
-                randAppleY = round(random.randrange(0, display_height-block_size))
+                randhumanX = round(random.randrange(0, map_width-block_size))
+                randhumanY = round(random.randrange(0, map_height-block_size))
                 snakeLength += 1
 
                 # logic for calculating the total score based on the balls present in the screen
@@ -596,10 +605,10 @@ def gameLoop():
                     poison_ability = poison_ability + num_of_balls;
 
 
-            elif lead_y + block_size > randAppleY and lead_y + block_size < randAppleY + AppleThickness:
+            elif lead_y + block_size > randhumanY and lead_y + block_size < randhumanY + humanThickness:
 
-                randAppleX = round(random.randrange(0, display_width-block_size))
-                randAppleY = round(random.randrange(0, display_height-block_size))
+                randhumanX = round(random.randrange(0, map_width-block_size))
+                randhumanY = round(random.randrange(0, map_height-block_size))
                 snakeLength += 1
 
                 # logic for calculating the total score based on the balls present in the screen
