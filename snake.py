@@ -47,14 +47,36 @@ light_green = (0,255,0)
 display_width = 800
 display_height  = 600
 
-
 # size of map.
 map_width = 2400
 map_height = 3000
 
+# background border width.
+BORDER_WIDTH = 20
+
+lead_x = display_width/2
+lead_y = display_height/2
+
 # camera position. should be camera_x = 800 , camera_y = 2400 ..
 camera_x = 0
 camera_y = 0
+
+# store the snake body in a list.
+snakeList = []
+
+# humans list, food for snake.
+humans = []
+humanFaces = []
+humanFaces.append(pygame.image.load('images/face_1.png'))
+humanFaces.append(pygame.image.load('images/face_2.png'))
+humanFaces.append(pygame.image.load('images/face_3.png'))
+
+
+# inner boundary dimensions.
+INNER_TOP = 200
+INNER_LEFT = 200
+INNER_RIGHT = 600
+INNER_BOTTOM = 400
 
 # get map image.
 map_image = pygame.image.load('images/map_test.png')
@@ -75,7 +97,7 @@ FPS = 15
                 #******** Sprite Images *******
 
 # Snake Sprite Images.
-snakeDirection = 'up'
+snakeDirection = None
 snakeHead = pygame.image.load('images/snake_head.png')
 snakeBody1 = pygame.image.load('images/snake_body1.png')
 snakeBody2 = pygame.image.load('images/snake_body2.png')
@@ -136,7 +158,7 @@ def game_intro():
         gameDisplay.fill(white)
         message_to_screen("Welcome to Snake & Bouncy balls", darkBlue, -150, "large")
         message_to_screen("Remember to be smart when generating or removing balls", black, -30)
-        message_to_screen("Each ball you have in the screen will give you +1 point when you eat an apple", black, 0)
+        message_to_screen("Each ball you have in the screen will give you +1 point when you eat an human", black, 0)
         message_to_screen("The more balls you have, the more points you can get! but it's more difficult", black, 30)
         message_to_screen("If it gets difficult, remove balls to move freely, you have 15 max collisions before you lose", black, 60)
         message_to_screen("to add a ball, press 'a' , to delete a ball press 'd' ", green, 90)
@@ -150,9 +172,11 @@ def game_intro():
 # snake(snakeList) draws the snake to screen based on the current position
 # of each snake segment listed in the snakeList.
 def snake(snakeList):
-
+    print 'snakeList: ', snakeList
     global snakeDirection
     global snakeHead
+    global lead_x
+    global lead_y
 
     # create a new head sprite to rotate appropriately.
     head = pygame.image.load('images/snake_head.png')
@@ -261,9 +285,16 @@ def gameLoop():
     gameExit = False
     gameOver = False
 
+    # this is the snakes position in screen space.
     # x,y positions of the head of the snake. lead, refers to head.
-    lead_x = display_width/2
-    lead_y = display_height/2
+    global lead_x #= display_width/2
+    global lead_y #= display_height/2
+    lead_x = 400
+    lead_y = 300
+
+    # the snakes position in map space.
+    snake_x = 400#1200
+    snake_y = 300#2700 # depends on the size of the map image.
 
     # the change in the lead positions represent the direction and the number of pixels to move for every frame.
     lead_x_change = 0
@@ -279,7 +310,7 @@ def gameLoop():
     global camera_y
 
     # initialize the snake.
-    snakeList = []
+    global snakeList#snakeList = []
     snakeLength = 1
     global snakeDirection # do we need to make this global, or can we declare it in main.
 
@@ -291,9 +322,9 @@ def gameLoop():
     ball = make_ball()
     ball_list.append(ball)
 
-    #set up random apple locations
-    randAppleX = round(random.randrange(0, display_width-block_size))
-    randAppleY = round(random.randrange(0, display_height-block_size))
+    #set up random human locations and faces.  human array has the format [ [x,y,img], [x,y,img], ... ]
+    for i in range(0, 100):
+        humans.append([random.randrange(BORDER_WIDTH, map_width - BORDER_WIDTH), random.randrange(BORDER_WIDTH, map_height - BORDER_WIDTH), random.choice(humanFaces)])
 
     while not gameExit:
         #====================================
@@ -374,14 +405,33 @@ def gameLoop():
 
         #====================================
 
-        # if snake hit screen boundries, game over
-        if lead_x >= map_width or lead_x < 0 or lead_y >= map_height or lead_y < 0:
+        #if snake hits screen boundries, game over
+        if snake_x >= map_width and lead_x >= 800:
+            print 'map_width', map_width
+            print 'snake_x', snake_x
+            print 'lead_x', lead_x
+            gameOver = True
+        elif snake_y >= map_height and lead_y >= 600:
+            print 'map_width', map_width
+            print 'snake_y', snake_y
+            print 'lead_y', lead_y
+            gameOver = True
+        elif lead_x <= 0 or lead_y <= 0:
             gameOver = True
 
+        # if snake_x >= map_width or lead_x < 0 or snake_y >= map_height or lead_y < 0:
+        #     gameOver = True
+
+        #====================================
+
+        # print 'camera_x', camera_x
+        # print 'snake_x, snake_y', snake_x, snake_y
 
         # Update the position of the snake based on the changes inputted by arrow keys, and based on the snakes location in the map.
         if snakeDirection == 'left':
-            if lead_x == 100: # if snake is at the left boundary, just move the camera, not the snake.
+            if lead_x == INNER_LEFT: # if snake is at the left boundary, just move the camera, not the snake.
+                # update the snake's position in map space.
+                snake_x -= block_size
                 # update the camera
                 if camera_x is not 0:
                     camera_x -= lead_x_change
@@ -391,13 +441,19 @@ def gameLoop():
                     lead_y += lead_y_change
                     # update the
             else: # if the snake is not at the left boundary, scroll just the snake.
-                # update the snake.
+                # update the snake in screen space.
                 lead_x += lead_x_change
                 lead_y += lead_y_change
         elif snakeDirection == 'right':
-            if lead_x == 700:
+            # update the snake's position in map space.
+            snake_x += block_size
+
+            if lead_x == INNER_RIGHT:
                 # update the camera
-                if (camera_x + display_width) is not map_width:
+                if abs(camera_x - display_width) < map_width:
+                    # print 'here is the camera position ', camera_x
+                    # print 'here is the camera width + display width ', (camera_x + display_width)
+                    # print 'lead_x_change', lead_x_change
                     camera_x -= lead_x_change
                 else:
                     lead_x += lead_x_change
@@ -407,7 +463,10 @@ def gameLoop():
                 lead_x += lead_x_change
                 lead_y += lead_y_change
         elif snakeDirection == 'up':
-            if lead_y == 100: # update the camera
+            # update the snake's position in map space.
+            snake_y -= block_size
+
+            if lead_y == INNER_TOP: # update the camera
                 if camera_y is not 0:
                     camera_y -= lead_y_change
                 else:
@@ -417,10 +476,13 @@ def gameLoop():
                 lead_x += lead_x_change
                 lead_y += lead_y_change
         elif snakeDirection == 'down':
-            if lead_y == 500: # update the camera
-                if (camera_y + display_height) is not map_height:
+            # update the snake's position in map space.
+            snake_y += block_size
+
+            if lead_y == INNER_BOTTOM: # update the camera
+                if abs(camera_y - display_height) < map_height: # if the camera hasn't reached the end of the map, just scroll the map.
                     camera_y -= lead_y_change
-                else:
+                else: #
                     lead_x += lead_x_change
                     lead_y += lead_y_change
             else:
@@ -428,37 +490,79 @@ def gameLoop():
                 lead_x += lead_x_change
                 lead_y += lead_y_change
 
-
+        # update!
         pygame.display.update()
 
         #====================================
 
-        #lead_x += lead_x_change
-        #lead_y += lead_y_change
-
         # draw the background
-        #gameDisplay.fill(white)
         gameDisplay.blit(map_image, (camera_x, camera_y))
 
-        # place an apple as a red rectangle randomly in the screen
-        AppleThickness = 30
-        pygame.draw.rect(gameDisplay, red, [randAppleX, randAppleY, AppleThickness, AppleThickness])
+        # place an human as a red rectangle randomly in the map
+        for human in humans
+        #humanThickness = 30
+        #pygame.draw.rect(gameDisplay, red, [randhumanX, randhumanY, humanThickness, humanThickness])
+
 
         # build snake.
-        snakeHead = []
-        snakeHead.append(lead_x)
-        snakeHead.append(lead_y)
-        snakeList.append(snakeHead)
+        if lead_x == INNER_RIGHT and snakeDirection == 'right':
+            # append body behind head.
+            snakeList = []
+            for i in range(0, snakeLength):
+                snakeList.append([(lead_x - i*block_size), lead_y])
+            # reverse the list because the for loop above builds it backwards.
+            snakeList.reverse()
+            # draw snake.
+            snake(snakeList)
+        elif lead_x == INNER_LEFT and snakeDirection == 'left':
+            # append body behind head.
+            snakeList = []
+            for i in range(0, snakeLength):
+                snakeList.append([(lead_x + i*block_size), lead_y])
+            # reverse the list because the for loop above builds it backwards.
+            snakeList.reverse()
+            # draw snake.
+            snake(snakeList)
+        elif lead_y == INNER_BOTTOM and snakeDirection == 'down':
+            # append body behind head.
+            snakeList = []
+            for i in range(0, snakeLength):
+                snakeList.append([lead_x, (lead_y - i*block_size)])
+            # reverse the list because the for loop above builds it backwards.
+            snakeList.reverse()
+            # draw snake.
+            snake(snakeList)
+        elif lead_y == INNER_TOP and snakeDirection == 'up':
+            # append body behind head.
+            snakeList = []
+            for i in range(0, snakeLength):
+                snakeList.append([lead_x, (lead_y + i*block_size)])
+            # reverse the list because the for loop above builds it backwards.
+            snakeList.reverse()
+            # draw snake.
+            snake(snakeList)
+        else:
+            # if we are not at the inner boundary, update the snake body's position.
+            snakeSegment = []
+            snakeSegment.append(lead_x)
+            snakeSegment.append(lead_y)
+            snakeList.append(snakeSegment)
+            # smooth movment for the snake without leaving blcoks behind,
+            if len(snakeList) > snakeLength:
+                del snakeList[0]
+            # draw the snake
+            snake(snakeList)
 
-        # smooth movment for the snake without leaving blcoks behind,
-        if len(snakeList) > snakeLength:
-            del snakeList[0]
 
-        # this is where collision detection goes for snake body.
-        # TODO
 
-        # draw the snake
-        snake(snakeList)
+
+        #this works, but segments stack up onto the same position as head when snake is at inner boundary.
+        # collision detection for snake running into itself
+        for eachSegment in snakeList[:-1]:
+            if eachSegment == snakeHead:
+                gameOver = True
+
+
 
         # draw balls in the screen, randomly
         for ball in ball_list:
@@ -481,13 +585,13 @@ def gameLoop():
 
 
 
-        # make snake longer when eating an apple, collision detection ,
-        if lead_x > randAppleX and lead_x < randAppleX + AppleThickness or lead_x + block_size > randAppleX and lead_x + block_size < randAppleX + AppleThickness:
+        # make snake longer when eating an human, collision detection ,
+        if lead_x > randhumanX and lead_x < randhumanX + humanThickness or lead_x + block_size > randhumanX and lead_x + block_size < randhumanX + humanThickness:
 
-            if lead_y > randAppleY and lead_y < randAppleY + AppleThickness:
+            if lead_y > randhumanY and lead_y < randhumanY + humanThickness:
 
-                randAppleX = round(random.randrange(0, display_width-block_size))
-                randAppleY = round(random.randrange(0, display_height-block_size))
+                randhumanX = round(random.randrange(0, map_width-block_size))
+                randhumanY = round(random.randrange(0, map_height-block_size))
                 snakeLength += 1
 
                 # logic for calculating the total score based on the balls present in the screen
@@ -501,10 +605,10 @@ def gameLoop():
                     poison_ability = poison_ability + num_of_balls;
 
 
-            elif lead_y + block_size > randAppleY and lead_y + block_size < randAppleY + AppleThickness:
+            elif lead_y + block_size > randhumanY and lead_y + block_size < randhumanY + humanThickness:
 
-                randAppleX = round(random.randrange(0, display_width-block_size))
-                randAppleY = round(random.randrange(0, display_height-block_size))
+                randhumanX = round(random.randrange(0, map_width-block_size))
+                randhumanY = round(random.randrange(0, map_height-block_size))
                 snakeLength += 1
 
                 # logic for calculating the total score based on the balls present in the screen
