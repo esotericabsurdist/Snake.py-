@@ -65,12 +65,18 @@ camera_y = 0
 snakeList = []
 
 # humans list, food for snake.
+NUMBER_OF_HUMANS = 50
+HUMAN_WIDTH = 30
+HUMAN_HEIGHT = 30
 humans = []
 humanFaces = []
 humanFaces.append(pygame.image.load('images/face_1.png'))
 humanFaces.append(pygame.image.load('images/face_2.png'))
 humanFaces.append(pygame.image.load('images/face_3.png'))
-
+humanFaces.append(pygame.image.load('images/face_4.png'))
+humanFaces.append(pygame.image.load('images/face_5.png'))
+humanFaces.append(pygame.image.load('images/face_6.png'))
+humanFaces.append(pygame.image.load('images/face_7.png'))
 
 # inner boundary dimensions.
 INNER_TOP = 200
@@ -172,7 +178,7 @@ def game_intro():
 # snake(snakeList) draws the snake to screen based on the current position
 # of each snake segment listed in the snakeList.
 def snake(snakeList):
-    print 'snakeList: ', snakeList
+    #print 'snakeList: ', snakeList
     global snakeDirection
     global snakeHead
     global lead_x
@@ -183,16 +189,16 @@ def snake(snakeList):
 
     # change the direction based on the given direction.
     if snakeDirection == 'left':
-        print 'going left'
+        #print 'going left'
         snakeHead = pygame.transform.rotate(head, 90)
     if snakeDirection == 'right':
-        print 'going right'
+        #print 'going right'
         snakeHead = pygame.transform.rotate(head, 270)
     if snakeDirection == 'down':
-        print 'going down'
+        #print 'going down'
         snakeHead = pygame.transform.rotate(head, 180)
     if snakeDirection == 'up':
-        print 'going up'
+        #print 'going up'
         snakeHead = pygame.transform.rotate(head, 0)
 
     # draw the rest of the snake's body:
@@ -323,8 +329,9 @@ def gameLoop():
     ball_list.append(ball)
 
     #set up random human locations and faces.  human array has the format [ [x,y,img], [x,y,img], ... ]
-    for i in range(0, 100):
+    for i in range(0, NUMBER_OF_HUMANS):
         humans.append([random.randrange(BORDER_WIDTH, map_width - BORDER_WIDTH), random.randrange(BORDER_WIDTH, map_height - BORDER_WIDTH), random.choice(humanFaces)])
+
 
     while not gameExit:
         #====================================
@@ -407,14 +414,14 @@ def gameLoop():
 
         #if snake hits screen boundries, game over
         if snake_x >= map_width and lead_x >= 800:
-            print 'map_width', map_width
-            print 'snake_x', snake_x
-            print 'lead_x', lead_x
+            # print 'map_width', map_width
+            # print 'snake_x', snake_x
+            # print 'lead_x', lead_x
             gameOver = True
         elif snake_y >= map_height and lead_y >= 600:
-            print 'map_width', map_width
-            print 'snake_y', snake_y
-            print 'lead_y', lead_y
+            # print 'map_width', map_width
+            # print 'snake_y', snake_y
+            # print 'lead_y', lead_y
             gameOver = True
         elif lead_x <= 0 or lead_y <= 0:
             gameOver = True
@@ -498,10 +505,12 @@ def gameLoop():
         # draw the background
         gameDisplay.blit(map_image, (camera_x, camera_y))
 
-        # place an human as a red rectangle randomly in the map
-        for human in humans
-        #humanThickness = 30
-        #pygame.draw.rect(gameDisplay, red, [randhumanX, randhumanY, humanThickness, humanThickness])
+
+        # draw the human if it is on the screen.
+        for x,y,img in humans:
+            # if the human is in screenspace, draw the human.
+            #if (x < (camera_x+display_width) and (x >= camera_x)) and (y < (camera_y+display_height) and (y >= camera_y)):
+            gameDisplay.blit(img, (x+camera_x, y+camera_y))
 
 
         # build snake.
@@ -554,14 +563,10 @@ def gameLoop():
             snake(snakeList)
 
 
-
-
-        #this works, but segments stack up onto the same position as head when snake is at inner boundary.
         # collision detection for snake running into itself
         for eachSegment in snakeList[:-1]:
             if eachSegment == snakeHead:
                 gameOver = True
-
 
 
         # draw balls in the screen, randomly
@@ -583,44 +588,66 @@ def gameLoop():
 
         bars(snake_life,poison_ability)
 
+        # collision detection for humans and snek
+        human_that_was_consumed = None
+        for index, human in enumerate(humans):
+            # get human location.
+            x = human[0]+camera_x
+            y = human[1]+camera_y
+
+            # compare to snake's mouth location.
+            if lead_x > x and lead_x < x + HUMAN_WIDTH or lead_x + block_size > x and lead_x + block_size < x + HUMAN_WIDTH:
+                if lead_y > y and lead_y < y + HUMAN_HEIGHT:
+                    print ' collision '
+                    snakeLength += 1
+                    human_that_was_consumed = index
+                    break
+                elif lead_y + block_size > y and lead_y + block_size < y + HUMAN_HEIGHT:
+                    print 'collision'
+                    snakeLength += 1
+                    human_that_was_consumed = index
+                    break
+        if human_that_was_consumed != None:
+            del humans[human_that_was_consumed]
 
 
-        # make snake longer when eating an human, collision detection ,
-        if lead_x > randhumanX and lead_x < randhumanX + humanThickness or lead_x + block_size > randhumanX and lead_x + block_size < randhumanX + humanThickness:
 
-            if lead_y > randhumanY and lead_y < randhumanY + humanThickness:
-
-                randhumanX = round(random.randrange(0, map_width-block_size))
-                randhumanY = round(random.randrange(0, map_height-block_size))
-                snakeLength += 1
-
-                # logic for calculating the total score based on the balls present in the screen
-                if num_of_balls == 0:
-                    total_socre = total_socre + 1;
-                    #poison_ability can be developed with better algorithm to keep up with the game level
-                    poison_ability = poison_ability + 1;
-                else:
-                    total_socre = total_socre + num_of_balls
-                    #for now, we're treating poison_ability as total score
-                    poison_ability = poison_ability + num_of_balls;
-
-
-            elif lead_y + block_size > randhumanY and lead_y + block_size < randhumanY + humanThickness:
-
-                randhumanX = round(random.randrange(0, map_width-block_size))
-                randhumanY = round(random.randrange(0, map_height-block_size))
-                snakeLength += 1
-
-                # logic for calculating the total score based on the balls present in the screen
-                if num_of_balls == 0:
-                    total_socre = total_socre + 1
-                    #poison_ability can be developed with better algorithm to keep up with the game level
-                    poison_ability = poison_ability + 1;
-                else:
-                    total_socre = total_socre + num_of_balls
-                    #for now, we're treating poison_ability as total score
-                    poison_ability = poison_ability + num_of_balls;
-
+        # # make snake longer when eating a human, collision detection ,
+        # if lead_x > randhumanX and lead_x < randhumanX + humanThickness or lead_x + block_size > randhumanX and lead_x + block_size < randhumanX + humanThickness:
+        #
+        #     if lead_y > randhumanY and lead_y < randhumanY + humanThickness:
+        #
+        #         #randhumanX = round(random.randrange(0, map_width-block_size))
+        #         #randhumanY = round(random.randrange(0, map_height-block_size))
+        #         snakeLength += 1
+        #
+        #         # logic for calculating the total score based on the balls present in the screen
+        #         if num_of_balls == 0:
+        #             total_socre = total_socre + 1;
+        #             #poison_ability can be developed with better algorithm to keep up with the game level
+        #             poison_ability = poison_ability + 1;
+        #         else:
+        #             total_socre = total_socre + num_of_balls
+        #             #for now, we're treating poison_ability as total score
+        #             poison_ability = poison_ability + num_of_balls;
+        #
+        #
+        #     elif lead_y + block_size > randhumanY and lead_y + block_size < randhumanY + humanThickness:
+        #
+        #         #randhumanX = round(random.randrange(0, map_width-block_size))
+        #         #randhumanY = round(random.randrange(0, map_height-block_size))
+        #         snakeLength += 1
+        #
+        #         # logic for calculating the total score based on the balls present in the screen
+        #         if num_of_balls == 0:
+        #             total_socre = total_socre + 1
+        #             #poison_ability can be developed with better algorithm to keep up with the game level
+        #             poison_ability = poison_ability + 1;
+        #         else:
+        #             total_socre = total_socre + num_of_balls
+        #             #for now, we're treating poison_ability as total score
+        #             poison_ability = poison_ability + num_of_balls;
+        #
 
 
         # collision detection for the snake when it touches the bouncing balls, not perfect
